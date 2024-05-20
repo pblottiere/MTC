@@ -1,11 +1,11 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, web::Data};
-use serde_derive::Deserialize;
 use std::thread;
-use std::time::Duration;
 use std::sync::Mutex;
 use chrono::prelude::*;
+use std::time::Duration;
+use serde_derive::Deserialize;
+use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, web::Data};
 
-use crate::config::postgresql::ConfigPostgreSQL;
+use crate::config::Config;
 
 mod config;
 
@@ -44,14 +44,10 @@ async fn echo(req_body: String) -> impl Responder {
     HttpResponse::Ok().body(req_body)
 }
 
-async fn manual_hello() -> impl Responder {
-    HttpResponse::Ok().body("Hey there!")
-}
-
-fn read_config(shared_data: actix_web::web::Data<SharedData>) -> () {
+fn read_projects(psql_service: String, shared_data: actix_web::web::Data<SharedData>) -> () {
     loop {
         thread::sleep(Duration::from_secs(1));
-        println!("Updating time.... ");
+        println!("Updating time.... {}", psql_service);
         let now: DateTime<Local> = Local::now();
         // let mut data = data.lock().unwrap();
         // data.insert(String::from("time_now"), now.to_rfc2822());
@@ -61,18 +57,22 @@ fn read_config(shared_data: actix_web::web::Data<SharedData>) -> () {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let shared_data = Data::new(SharedData {
+    // read config from environment variables
+    let config = Config::new();
+
+    // config is dynamic so shared between threads
+    let projects = Data::new(SharedData {
         pending_indexes: Mutex::new(vec![]),
     });
-    let data = shared_data.clone(); // only copies the pointer
+    let projects_ptr = projects.clone(); // only copies the pointer
 
     thread::spawn(move || {
-        read_config(data)
+        read_projects(config.psql_service, projects_ptr)
     });
 
     HttpServer::new(move || {
         App::new()
-            .app_data(shared_data.clone())
+            .app_data(projects.clone())
             .service(map_project)
     })
     .bind(("127.0.0.1", 8081))?
