@@ -1,7 +1,8 @@
 use std::thread;
 use std::sync::Mutex;
-use chrono::prelude::*;
+use std::error::Error;
 use std::time::Duration;
+
 use serde_derive::Deserialize;
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, web::Data};
 
@@ -9,9 +10,25 @@ use crate::config::Config;
 
 mod config;
 
-// #[derive(Copy, Clone)]
-pub struct SharedData {
-    pending_indexes: Mutex<Vec<String>>,
+#[derive(Clone)]
+pub struct Project {
+    pub name: String,
+}
+
+pub struct Projects {
+    projects: Mutex<Vec<Project>>,
+}
+
+impl Projects {
+    pub fn get(&self, name: String) -> Result<Project, Box<dyn Error>> {
+        for project in self.projects.lock().unwrap().iter() {
+            match &project.name.as_str() {
+                a if name == a.to_string() => return Ok(project.clone()),
+                _ => return Err("".into()),
+            };
+        }
+        return Err("".into());
+    }
 }
 
 #[get("/")]
@@ -32,11 +49,14 @@ async fn map(req: web::Query<WMSParams>) -> impl Responder {
 }
 
 #[get("/map/{project}")]
-async fn map_project(path: web::Path<String>, shared_data: actix_web::web::Data<SharedData>) -> impl Responder {
-    let friend = path.into_inner();
-    let now = shared_data.pending_indexes.lock().unwrap().pop();
-    dbg!("[{}] Welcome {}", now, friend);
-    HttpResponse::Ok().body("Map porjtect!")
+async fn map_project(path: web::Path<String>, projects: actix_web::web::Data<Projects>) -> impl Responder {
+    let project: Project = match projects.get(path.to_string()) {
+        Ok(p) => p,
+        Err(e) => return HttpResponse::BadRequest().body("gloups"),
+    };
+
+    let msg = format!("Hello, {}!", path.to_string());
+    HttpResponse::Ok().body(msg)
 }
 
 #[post("/echo")]
@@ -44,14 +64,10 @@ async fn echo(req_body: String) -> impl Responder {
     HttpResponse::Ok().body(req_body)
 }
 
-fn read_projects(psql_service: String, shared_data: actix_web::web::Data<SharedData>) -> () {
+fn read_projects(psql_service: String, projects: actix_web::web::Data<Projects>) -> () {
     loop {
         thread::sleep(Duration::from_secs(1));
-        println!("Updating time.... {}", psql_service);
-        let now: DateTime<Local> = Local::now();
-        // let mut data = data.lock().unwrap();
-        // data.insert(String::from("time_now"), now.to_rfc2822());
-        shared_data.pending_indexes.lock().unwrap().push(now.to_rfc2822());
+        projects.projects.lock().unwrap().push(Project{name: "coucou".to_string()});
     }
 }
 
@@ -61,8 +77,8 @@ async fn main() -> std::io::Result<()> {
     let config = Config::new();
 
     // config is dynamic so shared between threads
-    let projects = Data::new(SharedData {
-        pending_indexes: Mutex::new(vec![]),
+    let projects = Data::new(Projects {
+        projects: Mutex::new(vec![]),
     });
     let projects_ptr = projects.clone(); // only copies the pointer
 
