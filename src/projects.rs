@@ -1,9 +1,12 @@
-use std::sync::Mutex;
 use std::error::Error;
+use std::sync::Mutex;
+use serde::Serialize;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub struct Project {
     pub name: String,
+    pub layers: Vec<(String, String)>,
+    // datetime, creator
 }
 
 pub struct Projects {
@@ -11,7 +14,7 @@ pub struct Projects {
 }
 
 impl Projects {
-    pub fn get(&self, name: String) -> Result<Project, Box<dyn Error>> {
+    pub fn project(&self, name: String) -> Result<Project, Box<dyn Error>> {
         for project in self.projects.lock().unwrap().iter() {
             match &project.name.as_str() {
                 a if name == a.to_string() => return Ok(project.clone()),
@@ -19,5 +22,13 @@ impl Projects {
             };
         }
         return Err("".into());
+    }
+
+    pub fn update(&self) {
+        let p = Project {
+            name: "my_project".to_string(),
+            layers: vec![("my_layer".to_string(), "http://qgiserver/".to_string())],
+        };
+        self.projects.lock().unwrap().push(p);
     }
 }

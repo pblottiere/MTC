@@ -14,7 +14,10 @@ impl Default for Config {
         key = "MTC_PSQL_SERVICE";
         let psql_service = env::var(key).expect(key);
 
-        Config { cache_dir: PathBuf::from(cache_dir), psql_service: psql_service }
+        Config {
+            cache_dir: PathBuf::from(cache_dir),
+            psql_service: psql_service,
+        }
     }
 }
 
