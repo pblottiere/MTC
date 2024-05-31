@@ -3,9 +3,15 @@ use std::sync::Mutex;
 use serde::Serialize;
 
 #[derive(Clone, Serialize)]
+pub struct Layer {
+    pub name: String,
+    pub uri: String,
+}
+
+#[derive(Clone, Serialize)]
 pub struct Project {
     pub name: String,
-    pub layers: Vec<(String, String)>,
+    pub layers: Vec<Layer>,
     // datetime, creator
 }
 
@@ -25,9 +31,10 @@ impl Projects {
     }
 
     pub fn update(&self) {
+        let l = Layer { name: "my_layer".to_string(), uri: "http://qgisserver/".to_string() };
         let p = Project {
             name: "my_project".to_string(),
-            layers: vec![("my_layer".to_string(), "http://qgiserver/".to_string())],
+            layers: vec![l],
         };
         self.projects.lock().unwrap().push(p);
     }

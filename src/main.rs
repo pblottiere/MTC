@@ -1,5 +1,6 @@
-use std::sync::Mutex;
 use std::thread;
+use serde::Serialize;
+use std::sync::Mutex;
 use std::time::Duration;
 
 use actix_web::{get, web, web::Data, App, HttpResponse, HttpServer};
@@ -14,8 +15,16 @@ mod projects;
 async fn projects_list(
     projects: actix_web::web::Data<Projects>,
 ) -> HttpResponse {
-    let mut_guard = projects.projects.lock().unwrap();
-    HttpResponse::Ok().json(&*mut_guard)
+    #[derive(Clone, Serialize)]
+    struct JsonProject {
+        name: String
+    }
+    let mut ps : Vec<JsonProject> = vec![];
+
+    for p in projects.projects.lock().unwrap().iter() {
+        ps.push(JsonProject{name: (*p.name).to_string()})
+    }
+    HttpResponse::Ok().json(ps)
 }
 
 #[get("/api/projects/{project}")]
