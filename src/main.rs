@@ -1,58 +1,16 @@
-use std::thread;
-use serde::Serialize;
 use std::sync::Mutex;
+use std::thread;
 use std::time::Duration;
 
-use actix_web::{get, web, web::Data, App, HttpResponse, HttpServer};
+use actix_web::{web::Data, App, HttpServer};
 
+use crate::api::{project, project_layers, projects_list};
 use crate::config::Config;
 use crate::projects::Projects;
 
+mod api;
 mod config;
 mod projects;
-
-#[get("/api/projects")]
-async fn projects_list(
-    projects: actix_web::web::Data<Projects>,
-) -> HttpResponse {
-    #[derive(Clone, Serialize)]
-    struct JsonProject {
-        name: String
-    }
-    let mut ps : Vec<JsonProject> = vec![];
-
-    for p in projects.projects.lock().unwrap().iter() {
-        ps.push(JsonProject{name: (*p.name).to_string()})
-    }
-    HttpResponse::Ok().json(ps)
-}
-
-#[get("/api/projects/{project}")]
-async fn project(
-    path: web::Path<String>,
-    projects: actix_web::web::Data<Projects>,
-) -> HttpResponse {
-    let p = match projects.project(path.to_string()) {
-        Ok(p) => p,
-        Err(_) => return HttpResponse::BadRequest().body("Project doesn't not exist"),
-    };
-
-    HttpResponse::Ok().json(p)
-}
-
-#[get("/api/projects/{project}/layers")]
-async fn project_layers(
-    path: web::Path<String>,
-    projects: actix_web::web::Data<Projects>,
-) -> HttpResponse {
-    let p = match projects.project(path.to_string()) {
-        Ok(p) => p,
-        Err(_) => return HttpResponse::BadRequest().body("Project doesn't not exist"),
-    };
-
-    let msg = format!("Hello, {}!", p.name.to_string());
-    HttpResponse::Ok().body(msg)
-}
 
 fn update_projects(_psql_service: String, projects: actix_web::web::Data<Projects>) -> () {
     loop {

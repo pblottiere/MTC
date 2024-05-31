@@ -1,6 +1,6 @@
+use serde::Serialize;
 use std::error::Error;
 use std::sync::Mutex;
-use serde::Serialize;
 
 #[derive(Clone, Serialize)]
 pub struct Layer {
@@ -31,7 +31,10 @@ impl Projects {
     }
 
     pub fn update(&self) {
-        let l = Layer { name: "my_layer".to_string(), uri: "http://qgisserver/".to_string() };
+        let l = Layer {
+            name: "my_layer".to_string(),
+            uri: "http://qgisserver/".to_string(),
+        };
         let p = Project {
             name: "my_project".to_string(),
             layers: vec![l],
