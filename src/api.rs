@@ -43,6 +43,6 @@ async fn project_layers(
         Err(_) => return HttpResponse::BadRequest().body("Project doesn't not exist"),
     };
 
-    let msg = format!("Hello, {}!", p.name.to_string());
-    HttpResponse::Ok().body(msg)
+    let layers = p.layers();
+    HttpResponse::Ok().body("coucou".to_string())
 }
