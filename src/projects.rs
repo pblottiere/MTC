@@ -1,8 +1,8 @@
-use roxmltree;
 use serde::Serialize;
 use std::error::Error;
 use std::sync::Mutex;
-use ureq;
+
+use crate::wms::WMS;
 
 #[derive(Clone, Serialize)]
 pub struct Layer {
@@ -19,54 +19,17 @@ pub struct Project {
 
 impl Project {
     pub fn layers(&self) -> Result<Vec<Layer>, String> {
-        let mut lyrs: Vec<Layer> = Vec::new();
-        let getcapa_url = format!("{}?SERVICE=WMS&REQUEST=GetCapabilities", self.uri);
-        match ureq::get(getcapa_url.as_str()).call() {
-            Ok(response) => {
-                let xmldoc = response.into_string().unwrap();
-                let doc = roxmltree::Document::parse(xmldoc.as_str()).unwrap();
-                for node in doc.descendants() {
-                    if node.is_element() {
-                        match node.tag_name().name() {
-                            "Layer" => {
-                                for n in node.children() {
-                                    if n.is_element() {
-                                        match n.tag_name().name() {
-                                            "Layer" => {
-                                                let mut layer_name = String::from("");
-                                                for nn in n.children() {
-                                                    if nn.is_element() {
-                                                        match nn.tag_name().name() {
-                                                            "Title" => {
-                                                                layer_name =
-                                                                    nn.text().unwrap().to_string();
-                                                            }
-                                                            _ => (),
-                                                        }
-                                                    }
-                                                }
-                                                let layer = Layer { name: layer_name };
-                                                lyrs.push(layer);
-                                            }
-                                            _ => (),
-                                        }
-                                    }
-                                }
-                                break;
-                            }
-                            _ => (),
-                        }
-                    }
-                }
+        let wms = WMS {
+            uri: self.uri.clone(),
+        };
+        match wms.layers() {
+            Ok(layers) => {
+                return Ok(layers);
             }
-            Err(ureq::Error::Status(_code, _response)) => {
-                return Err::<Vec<Layer>, String>(_response.status_text().to_string());
-            }
-            Err(ureq::Error::Transport(_transport)) => {
-                return Err::<Vec<Layer>, String>(_transport.message().unwrap().to_string());
+            Err(err_msg) => {
+                return Err::<Vec<Layer>, String>(err_msg);
             }
         }
-        return Ok(lyrs);
     }
 }
 

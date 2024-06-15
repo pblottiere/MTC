@@ -11,6 +11,7 @@ use crate::projects::Projects;
 mod api;
 mod config;
 mod projects;
+mod wms;
 
 fn update_projects(_psql_service: String, projects: actix_web::web::Data<Projects>) -> () {
     loop {
