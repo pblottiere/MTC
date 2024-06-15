@@ -38,11 +38,14 @@ async fn project_layers(
     path: web::Path<String>,
     projects: actix_web::web::Data<Projects>,
 ) -> HttpResponse {
-    let p = match projects.project(path.to_string()) {
-        Ok(p) => p,
+    match projects.project(path.to_string()) {
+        Ok(p) => {
+            let layers = p.layers();
+            match layers {
+                Ok(layers) => return HttpResponse::Ok().json(layers),
+                Err(e) => return HttpResponse::BadRequest().body(e),
+            };
+        }
         Err(_) => return HttpResponse::BadRequest().body("Project doesn't not exist"),
     };
-
-    let layers = p.layers();
-    HttpResponse::Ok().body("coucou".to_string())
 }

@@ -18,7 +18,7 @@ pub struct Project {
 }
 
 impl Project {
-    pub fn layers(&self) {
+    pub fn layers(&self) -> Result<Vec<Layer>, String> {
         let mut lyrs: Vec<Layer> = Vec::new();
         let getcapa_url = format!("{}?SERVICE=WMS&REQUEST=GetCapabilities", self.uri);
         match ureq::get(getcapa_url.as_str()).call() {
@@ -59,10 +59,14 @@ impl Project {
                     }
                 }
             }
-            Err(ureq::Error::Status(_code, _response)) => (),
-            Err(_) => (),
+            Err(ureq::Error::Status(_code, _response)) => {
+                return Err::<Vec<Layer>, String>(_response.status_text().to_string());
+            }
+            Err(ureq::Error::Transport(_transport)) => {
+                return Err::<Vec<Layer>, String>(_transport.message().unwrap().to_string());
+            }
         }
-        // return lyrs;
+        return Ok(lyrs);
     }
 }
 
