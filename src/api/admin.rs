@@ -4,7 +4,7 @@ use actix_web::{get, web, HttpResponse};
 
 use crate::projects::Projects;
 
-#[get("/api/projects")]
+#[get("/admin/projects")]
 async fn projects_list(projects: actix_web::web::Data<Projects>) -> HttpResponse {
     #[derive(Clone, Serialize)]
     struct JsonProject {
@@ -20,7 +20,7 @@ async fn projects_list(projects: actix_web::web::Data<Projects>) -> HttpResponse
     HttpResponse::Ok().json(ps)
 }
 
-#[get("/api/projects/{project}")]
+#[get("/admin/projects/{project}")]
 async fn project(
     path: web::Path<String>,
     projects: actix_web::web::Data<Projects>,
@@ -33,7 +33,7 @@ async fn project(
     HttpResponse::Ok().json(p)
 }
 
-#[get("/api/projects/{project}/layers")]
+#[get("/admin/projects/{project}/layers")]
 async fn project_layers(
     path: web::Path<String>,
     projects: actix_web::web::Data<Projects>,

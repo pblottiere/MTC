@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use actix_web::{web::Data, App, HttpServer};
 
-use crate::api::{project, project_layers, projects_list};
+use crate::api::admin;
 use crate::config::Config;
 use crate::projects::Projects;
 
@@ -36,9 +36,9 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(projects.clone())
-            .service(projects_list)
-            .service(project)
-            .service(project_layers)
+            .service(admin::projects_list)
+            .service(admin::project)
+            .service(admin::project_layers)
     })
     .bind(("127.0.0.1", 8081))?
     .run()
