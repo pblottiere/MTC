@@ -59,11 +59,11 @@ impl WMS {
             Ok(response) => {
                 return Ok(response.into_string().unwrap());
             }
-            Err(ureq::Error::Status(_code, _response)) => {
-                return Err::<String, String>(_response.status_text().to_string());
+            Err(ureq::Error::Status(_code, response)) => {
+                return Err::<String, String>(response.status_text().to_string());
             }
-            Err(ureq::Error::Transport(_transport)) => {
-                return Err::<String, String>(_transport.message().unwrap().to_string());
+            Err(ureq::Error::Transport(transport)) => {
+                return Err::<String, String>(transport.message().unwrap().to_string());
             }
         }
     }

@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use actix_web::{web::Data, App, HttpServer};
 
-use crate::api::admin;
+use crate::api::{admin, ogc};
 use crate::config::Config;
 use crate::projects::Projects;
 
@@ -39,7 +39,9 @@ async fn main() -> std::io::Result<()> {
             .service(admin::projects_list)
             .service(admin::project)
             .service(admin::project_layers)
+            .service(ogc::wms)
     })
+    .workers(16)
     .bind(("127.0.0.1", 8081))?
     .run()
     .await
